@@ -24,6 +24,8 @@ import com.afollestad.materialdialogs.MaterialDialog;
 import com.sam_chordas.android.stockhawk.R;
 import com.sam_chordas.android.stockhawk.data.QuoteColumns;
 import com.sam_chordas.android.stockhawk.data.QuoteProvider;
+import com.sam_chordas.android.stockhawk.event.InternalMassage;
+import com.sam_chordas.android.stockhawk.model.StockDetail;
 import com.sam_chordas.android.stockhawk.rest.QuoteCursorAdapter;
 import com.sam_chordas.android.stockhawk.rest.RecyclerViewItemClickListener;
 import com.sam_chordas.android.stockhawk.rest.Utils;
@@ -34,6 +36,17 @@ import com.google.android.gms.gcm.PeriodicTask;
 import com.google.android.gms.gcm.Task;
 import com.melnykov.fab.FloatingActionButton;
 import com.sam_chordas.android.stockhawk.touch_helper.SimpleItemTouchHelperCallback;
+
+import org.greenrobot.eventbus.EventBus;
+import org.greenrobot.eventbus.Subscribe;
+import org.greenrobot.eventbus.ThreadMode;
+
+
+/**
+ * this is yahoo chart stock
+ * http://quant.stackexchange.com/questions/21750/yahoo-intraday-historical-download-timestamp
+ */
+
 
 public class MyStocksActivity extends AppCompatActivity implements LoaderManager.LoaderCallbacks<Cursor>{
 
@@ -67,6 +80,7 @@ public class MyStocksActivity extends AppCompatActivity implements LoaderManager
     // The intent service is for executing immediate pulls from the Yahoo API
     // GCMTaskService can only schedule tasks, they cannot execute immediately
     mServiceIntent = new Intent(this, StockIntentService.class);
+    mServiceIntent.setAction(StockIntentService.NORMAL_ACTION);
     if (savedInstanceState == null){
       // Run the initialize task service so that some stocks appear upon an empty database
       mServiceIntent.putExtra("tag", "init");
@@ -155,11 +169,17 @@ public class MyStocksActivity extends AppCompatActivity implements LoaderManager
     }
   }
 
-
   @Override
   public void onResume() {
     super.onResume();
+    EventBus.getDefault().register(this);
     getLoaderManager().restartLoader(CURSOR_LOADER_ID, null, this);
+  }
+
+  @Override
+  protected void onPause() {
+    super.onPause();
+    EventBus.getDefault().unregister(this);
   }
 
   public void networkToast(){
@@ -221,6 +241,11 @@ public class MyStocksActivity extends AppCompatActivity implements LoaderManager
   @Override
   public void onLoaderReset(Loader<Cursor> loader){
     mCursorAdapter.swapCursor(null);
+  }
+
+  @Subscribe(threadMode = ThreadMode.MAIN)
+  public void onMessageEvent(InternalMassage event) {
+    Toast.makeText(this, event.getTheMassage(), Toast.LENGTH_SHORT).show();
   }
 
 }

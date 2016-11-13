@@ -1,6 +1,7 @@
 package com.sam_chordas.android.stockhawk.rest;
 
 import android.content.Context;
+import android.content.Intent;
 import android.database.Cursor;
 import android.graphics.Color;
 import android.graphics.Typeface;
@@ -9,13 +10,17 @@ import android.support.v7.widget.RecyclerView;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.LinearLayout;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import com.sam_chordas.android.stockhawk.R;
 import com.sam_chordas.android.stockhawk.data.QuoteColumns;
 import com.sam_chordas.android.stockhawk.data.QuoteProvider;
+import com.sam_chordas.android.stockhawk.service.StockIntentService;
 import com.sam_chordas.android.stockhawk.touch_helper.ItemTouchHelperAdapter;
 import com.sam_chordas.android.stockhawk.touch_helper.ItemTouchHelperViewHolder;
+import com.sam_chordas.android.stockhawk.ui.LineChartActivity1;
 
 /**
  * Created by sam_chordas on 10/6/15.
@@ -45,7 +50,21 @@ public class QuoteCursorAdapter extends CursorRecyclerViewAdapter<QuoteCursorAda
 
   @Override
   public void onBindViewHolder(final ViewHolder viewHolder, final Cursor cursor){
-    viewHolder.symbol.setText(cursor.getString(cursor.getColumnIndex("symbol")));
+    final String symbol = cursor.getString(cursor.getColumnIndex("symbol"));
+    viewHolder.parent.setTag(symbol);
+    viewHolder.parent.setOnClickListener(new View.OnClickListener() {
+        @Override
+        public void onClick(View v) {
+            /**
+             * this is yahoo chart stock
+             * http://quant.stackexchange.com/questions/21750/yahoo-intraday-historical-download-timestamp
+             */
+            Intent intent = new Intent(mContext, LineChartActivity1.class);
+            intent.setAction(symbol);
+            mContext.startActivity(intent);
+        }
+    });
+    viewHolder.symbol.setText(symbol);
     viewHolder.bidPrice.setText(cursor.getString(cursor.getColumnIndex("bid_price")));
     int sdk = Build.VERSION.SDK_INT;
     if (cursor.getInt(cursor.getColumnIndex("is_up")) == 1){
@@ -86,11 +105,13 @@ public class QuoteCursorAdapter extends CursorRecyclerViewAdapter<QuoteCursorAda
 
   public static class ViewHolder extends RecyclerView.ViewHolder
       implements ItemTouchHelperViewHolder, View.OnClickListener{
+    public final LinearLayout parent;
     public final TextView symbol;
     public final TextView bidPrice;
     public final TextView change;
     public ViewHolder(View itemView){
       super(itemView);
+      parent = (LinearLayout)itemView.findViewById(R.id.parent_layout);
       symbol = (TextView) itemView.findViewById(R.id.stock_symbol);
       symbol.setTypeface(robotoLight);
       bidPrice = (TextView) itemView.findViewById(R.id.bid_price);
@@ -109,7 +130,6 @@ public class QuoteCursorAdapter extends CursorRecyclerViewAdapter<QuoteCursorAda
 
     @Override
     public void onClick(View v) {
-
     }
   }
 }
