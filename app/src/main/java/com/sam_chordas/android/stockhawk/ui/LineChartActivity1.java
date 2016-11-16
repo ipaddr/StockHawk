@@ -7,7 +7,9 @@ import android.graphics.drawable.Drawable;
 import android.os.Bundle;
 import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AppCompatActivity;
+import android.view.View;
 import android.view.WindowManager;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import com.github.mikephil.charting.charts.LineChart;
@@ -31,19 +33,25 @@ import java.util.List;
 public class LineChartActivity1 extends AppCompatActivity{
 
     private LineChart mChart;
+    private TextView tv;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
-        getNetworkDetail();
-
         getWindow().setFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN,
                 WindowManager.LayoutParams.FLAG_FULLSCREEN);
+        getSupportActionBar().setDisplayShowHomeEnabled(true);
+        getSupportActionBar().setDisplayHomeAsUpEnabled(true);
+
         setContentView(R.layout.activity_linechart);
 
         mChart = (LineChart) findViewById(R.id.chart1);
         mChart.setBackgroundColor(Color.WHITE);
+
+        tv = (TextView)findViewById(R.id.empty_chart);
+
+        getNetworkDetail();
 
     }
 
@@ -62,18 +70,27 @@ public class LineChartActivity1 extends AppCompatActivity{
     private void getNetworkDetail(){
         if (getIntent() != null && getIntent().getAction() != null){
             String symbol = getIntent().getAction();
+            getSupportActionBar().setTitle(symbol);
             Intent intent = new Intent(this, StockIntentService.class);
             intent.setAction(StockIntentService.DETAIL_ACTION);
             intent.putExtra("tag", "add");
             intent.putExtra("symbol", symbol);
             startService(intent);
+            show(true);
+        } else {
+            show(false);
         }
     }
 
     @Subscribe(threadMode = ThreadMode.MAIN)
     public void onMessageEvent(StockDetail stockDetail) {
-        // add data
-        setData(stockDetail.getQuery().getResults().getQuote());
+        if (stockDetail != null){
+            // add data
+            setData(stockDetail.getQuery().getResults().getQuote());
+            show(true);
+        } else {
+            show(false);
+        }
     }
 
     private void setData(List<Quote> quotes) {
@@ -133,5 +150,15 @@ public class LineChartActivity1 extends AppCompatActivity{
         }
 
         mChart.invalidate();
+    }
+
+    private void show(boolean isDataAvailable){
+        if (isDataAvailable){
+            mChart.setVisibility(View.VISIBLE);
+            tv.setVisibility(View.GONE);
+        } else {
+            mChart.setVisibility(View.GONE);
+            tv.setVisibility(View.VISIBLE);
+        }
     }
 }
