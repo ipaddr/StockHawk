@@ -13,4 +13,6 @@
   <string name="search">Search</string>
   <string name="stock_not_found">Stock not Found!</string>
   <string name="stock_detail_not_found">Stock detail not Found!</string>
+  <string name="data_set_one">"DataSet 1"</string>
+  <string name="this_stock_is_already_saved">This stock is already saved!</string>
 </resources>
